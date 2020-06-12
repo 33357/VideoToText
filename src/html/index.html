@@ -1,0 +1,326 @@
+<html>
+<head>
+    <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/jszip-utils.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>pre { font-size:10px; line-height:4px;}</style>
+</head>
+<body>
+<div id="pre"></div>
+<div style="text-align: center;">
+    <div style="display: none;font-size:200px" id="load"></div>
+    <audio muted id="audio"></audio>
+    <button id="mute" onclick="Mute()" style="height:100px;width:200px;font-size:50px" type="button">
+        <span >响音</span>
+    </button>
+    <button id="pause" onclick="Pause()" style="height:100px;width:200px;font-size:50px" type="button">
+        <span >暂停</span>
+    </button>
+    <button onclick="Forward()" style="height:100px;width:200px;font-size:50px" type="button">
+        <span >快进</span>
+    </button>
+    <button onclick="Push()" style="height:100px;width:200px;font-size:50px" type="button">
+        <span >快退</span>
+    </button>
+    <div style="font-size:50px" id="showTime"></div>
+</div>
+</body>
+<script>
+    let workers=2;
+    let list=[];
+    let pageNum = 1;
+    let vttNum=1;
+    let zipNum=1;
+    let audio=document.getElementById("audio");
+    let idLoad=document.getElementById("load");
+    let isMute=true;
+    let isPause=false;
+    let isLoading=true;
+    let appTime=50;
+    let zipUrl = "./kai-1.0.0/kai_w1020_h300_f10/zip/kai_w1020_h300_f10_z2_b2/";
+    let HTML=[];
+    let config=[];
+    let loadText="加载中。。。";
+    let loadIndex=1;
+    let loadTimer;
+    let allLoad=false;
+    let pregress='00:00';
+    let long='00:00';
+    load();
+    setInterval(show, appTime);
+    requireZips();
+    audio.src=zipUrl+zipUrl.split('/')[1].split('-')[0]+'.mp3';
+    audio.load();
+    audio.oncanplay = function () {
+        let sec=parseInt(audio.duration%60).toString();
+        if(sec.length!=2){
+            sec='0'+sec;
+        }
+        let min=parseInt(audio.duration/60).toString();
+        if(min.length!=2){
+            min='0'+min;
+        }
+        long=min+":"+sec;
+    };
+
+    function requireZips() {
+        RequireZip(zipNum);
+        zipNum++;
+    }
+
+    function zipGetData(zip,fileName,dataType,zipIndex) {
+        return new Promise(function (resolve, reject) {
+            let time=new Date();
+            zip.file(fileName).async(dataType).then(async function success(data) {
+                console.log('unzip',fileName,zipIndex,new Date()-time);
+                resolve(data);
+            }, function error(e) {
+                reject(e)
+            });
+        })
+    }
+
+    function loadZip(fileName,zip,vttIndex,zipIndex){
+        return new Promise(async function () {
+            if(workers>0){
+                workers--;
+                let array=await zipGetData(zip,fileName,'Uint8Array',zipIndex);
+                let worker = new Worker('decode.js');
+                worker.onmessage = async function (event) {
+                    HTML.push({
+                        html: event.data.html,
+                        vttIndex: event.data.vttIndex,
+                        zipIndex: event.data.zipIndex
+                    });
+                    console.log('loadZip',event.data.vttIndex,event.data.zipIndex);
+                    if(event.data.vttIndex==1&&event.data.zipIndex==1){
+                        loadHTML(1,1);
+                        unload();
+                        audio.play();
+                    }
+                    if(list.length!=0){
+                        let arr=list.shift();
+                        let array=await zipGetData(arr.zip,arr.fileName,'Uint8Array',arr.zipIndex);
+                        this.postMessage({array:array,vttIndex:arr.vttIndex,zipIndex:arr.zipIndex,config:arr.config});
+                    }else{
+                        this.terminate();
+                        workers++;
+                    }
+                };
+                worker.postMessage({array:array,vttIndex:vttIndex,zipIndex:zipIndex,config:config});
+            }else{
+                list.push({fileName:fileName,zip:zip,vttIndex:vttIndex,zipIndex:zipIndex,config:config})
+            }
+        });
+    }
+
+    function RequireZip(zipIndex){
+        JSZipUtils.getBinaryContent(zipUrl+zipUrl.split('/')[4]+'_'+zipIndex+'.zip', function(err, data) {
+            if (err) {
+                console.log(err);
+                allLoad=true;
+            } else {
+                console.log('RequireZip',zipIndex);
+                let jszip=new JSZip();
+                jszip.loadAsync(data).then(async function (zip) {
+                    config=JSON.parse(await zipGetData(zip,'config.json','string',zipIndex));
+                    for(let i=0;i<config['vttNames'].length;i++){
+                        loadZip(config['vttNames'][i],zip,i+1,zipIndex);
+                    }
+                }, function (e) {
+                    console.log(e)
+                });
+            }
+        });
+    }
+
+    function loadHTML(newPageNum,newVttNum){
+        let html='';
+        if(parseInt(newVttNum/(config['zipSeconds']/config['vttSeconds']))==zipNum-2){
+            if(list.length==0){
+                requireZips();
+            }
+        }
+        for(let i=0;i<HTML.length;i++){
+            if(HTML[i]['vttIndex']+(HTML[i]['zipIndex']-1)*config['zipSeconds']/config['vttSeconds']==newVttNum){
+                html=HTML[i]['html'];
+                break;
+            }
+        }
+        if(html==''){
+            if(allLoad==false){
+                Push();
+                alert("无法快进，请等待加载！");
+            }
+            doPause();
+        }else{
+            pageNum=newPageNum;
+            vttNum=newVttNum;
+            document.getElementById("pre").innerHTML=html;
+            document.getElementById(`pre${pageNum}`).style.display = 'block';
+        }
+    }
+
+    function doSkip(skip) {
+        if(pageNum+skip>0&&pageNum+skip<=config['vttSeconds']*config['gifFrame']){
+            let idThis=document.getElementById(`pre${pageNum}`);
+            let idNext=document.getElementById(`pre${pageNum+skip}`);
+            if(idNext==null||idNext==undefined){
+                Pause();
+            }else{
+                pageNum+=skip;
+                idThis.style.display = 'none';
+                idNext.style.display = 'block';
+            }
+        }else if(pageNum+skip<=0){
+            let newPageNum=pageNum;
+            let newVttNum=vttNum;
+            newPageNum+=skip;
+            for(let i=0;;i++){
+                newVttNum--;
+                if(newVttNum<1){
+                    newVttNum=1;
+                    newPageNum=1;
+                    break
+                }
+                newPageNum+=config['vttSeconds']*config['gifFrame'];
+                if(newPageNum>0&&newPageNum<=config['vttSeconds']*config['gifFrame']){
+                    break;
+                }
+            }
+            loadHTML(newPageNum,newVttNum);
+        }else if(pageNum+skip>config['vttSeconds']*config['gifFrame']){
+            let newPageNum=pageNum;
+            let newVttNum=vttNum;
+            newPageNum+=skip;
+            for(let i=0;;i++){
+                newVttNum++;
+                newPageNum-=config['vttSeconds']*config['gifFrame'];
+                if(newPageNum>0&&newPageNum<=config['vttSeconds']*config['gifFrame']){
+                    break;
+                }
+            }
+            loadHTML(newPageNum,newVttNum);
+        }
+    }
+
+    function show() {
+        if(isLoading == false){
+            let frameNum=parseInt((audio.currentTime*1000)/(1000/config['gifFrame']));
+            let newPageNum=frameNum-(vttNum-1)*config['vttSeconds']*config['gifFrame'];
+            let skip=newPageNum-pageNum;
+            if(skip!=0){
+                doSkip(skip);
+            }
+            if(isPause==false){
+                getProgress();
+                showTime();
+                console.log('aduio',audio.currentTime*1000);
+                console.log('page',pageNum);
+            }
+        }
+    }
+
+    function showTime() {
+        let idShowTime=document.getElementById("showTime");
+        let sec=parseInt(audio.currentTime%60).toString();
+        if(sec.length!=2){
+            sec='0'+sec;
+        }
+        let min=parseInt(audio.currentTime/60).toString();
+        if(min.length!=2){
+            min='0'+min;
+        }
+        idShowTime.innerText=min+':'+sec+'/'+pregress+'/'+long;
+    }
+
+    function getProgress() {
+        let length=1;
+        for(;;length++){
+            let isHave=false;
+            for(let i=0;i<HTML.length;i++){
+                if(HTML[i]['vttIndex']+(HTML[i]['zipIndex']-1)*config['zipSeconds']/config['vttSeconds']==length){
+                    isHave=true;
+                    break;
+                }
+            }
+            if(isHave==false){
+                break;
+            }
+        }
+        let time=(length-1)*config['vttSeconds'];
+        let sec=parseInt(time%60).toString();
+        if(sec.length!=2){
+            sec='0'+sec;
+        }
+        let min=parseInt(time/60).toString();
+        if(min.length!=2){
+            min='0'+min;
+        }
+        pregress=min+':'+sec;
+    }
+
+    function showLoad() {
+        idLoad.innerText=loadText.substring(0,loadIndex);
+        loadIndex++;
+        if(loadIndex>loadText.length){
+            loadIndex=1
+        }
+    }
+
+    function Forward(){
+        audio.currentTime += 10;
+    }
+
+    function Push(){
+        audio.currentTime -= 10;
+    }
+    
+    function load() {
+        isLoading=true;
+        loadTimer=setInterval(showLoad, 500);
+        idLoad.style.display = 'block';
+    }
+    
+    function unload() {
+        isLoading=false;
+        clearInterval(loadTimer);
+        idLoad.style.display = 'none';
+    }
+
+    function Mute(){
+        if(isMute){
+            audio.muted = false;
+            isMute=false;
+            let idMute=document.getElementById("mute");
+            idMute.innerText='静音';
+        }else{
+            audio.muted = true;
+            isMute=true;
+            let idMute=document.getElementById("mute");
+            idMute.innerText='响音';
+        }
+    }
+
+    function doPause() {
+        isPause=false;
+        let idPause=document.getElementById("pause");
+        idPause.innerText='暂停';
+    }
+
+    function Pause(){
+        if(isPause){
+            audio.play();
+            isPause=false;
+            let idPause=document.getElementById("pause");
+            idPause.innerText='暂停';
+        }else{
+            audio.pause();
+            isPause=true;
+            let idPause=document.getElementById("pause");
+            idPause.innerText='继续';
+        }
+    }
+</script>
+</html>

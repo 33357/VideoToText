@@ -1,0 +1,13 @@
+{
+  "name": "VideoToText",
+  "version": "1.0.0",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "compressing": "^1.5.1",
+    "express": "^4.17.1",
+    "get-pixels": "^3.3.2",
+    "jimp": "^0.12.1",
+    "jszip": "^3.4.0",
+    "mime": "^2.4.6"
+  }
+}

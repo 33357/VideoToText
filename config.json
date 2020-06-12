@@ -1,0 +1,15 @@
+{
+  "videoName":"dongshi.mp4",
+  "codeVersion": "1.0.0",
+  "gifWidth": 1020,
+  "gifHeight": 300,
+  "gifFrame": 10,
+  "txtZoom": 1,
+  "vttSeconds": 5,
+  "zipSeconds": 60,
+  "txtColor" : "@#MBHA&XG893S5h1sri;:-,. ",
+  "mp3Bit": "102k",
+  "pythonThreads": 6,
+  "vttBPage":3,
+  "ffmpegPath": "./exe/ffmpeg.exe"
+}
