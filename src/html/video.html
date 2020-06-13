@@ -315,7 +315,8 @@
     }
     //强制暂停
     function doPause() {
-        isPause=false;
+        isPause=true;
+        audio.pause();
         let idPause=document.getElementById("pause");
         idPause.innerText='暂停';
     }

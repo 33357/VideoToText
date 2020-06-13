@@ -2,7 +2,6 @@ var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var mime = require('mime');
-var cache = {};
 
 let rootPath=path.join(__dirname, "../../");
 
@@ -12,30 +11,15 @@ function send404(response) {
     response.end();
 }
 
-function sendFile(response, filePath, fileContents) {
-    response.writeHead(200, { "Content-Type": mime.getType(path.basename(filePath)) });
-    response.end(fileContents);
-}
-
-function serveStatic(response, cache, absPath) {
-    if (cache[absPath]) {
-        sendFile(response, absPath, cache[absPath])
-    } else {
-        fs.exists(absPath, function(exists) {
-            if (exists) {
-                fs.readFile(absPath, function(err, data) {
-                    if (err) {
-                        send404(response)
-                    } else {
-                        cache[absPath] = data;
-                        sendFile(response, absPath, data)
-                    }
-                })
-            } else {
-                send404(response)
-            }
-        })
-    }
+function sendFile(response, filePath) {
+    fs.readFile(filePath, function(err, data) {
+        if (err) {
+            send404(response)
+        } else {
+            response.writeHead(200, { "Content-Type": mime.getType(path.basename(filePath)) });
+            response.end(data);
+        }
+    })
 }
 
 var server = http.createServer(function(request, response) {
@@ -50,10 +34,9 @@ var server = http.createServer(function(request, response) {
         filePath =  path.join(rootPath,'/build' + request.url)
     }
     console.log(filePath);
-    var absPath = filePath;
-    serveStatic(response, cache, absPath)
+    sendFile(response,filePath)
 });
 
-server.listen(3000, function() {
-    console.log("http://127.0.0.1:3000/")
+server.listen(80, function() {
+    console.log("http://127.0.0.1:80/")
 });
