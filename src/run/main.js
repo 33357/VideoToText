@@ -6,7 +6,7 @@ const {Worker} = require('worker_threads');
 let rootPath=path.join(__dirname, "../../");//项目根目录路径
 let jsonPath=`${rootPath}config.json`;//config.json路径
 const CONF=JSON.parse(fs.readFileSync(jsonPath));//引入config.json
-let videoName=CONF['videoName'].split('.')[0];//导入视频名
+let videoName=CONF['videoPath'].split('/')[2].split('.')[0];//导入视频名
 let videoFolderName=`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;//导出视频文件名
 let txtName = videoFolderName+`_z${CONF['txtZoom']}`;//txt文件名
 let vttName = txtName+`_b${CONF['vttBPage']}`;//vtt文件名
@@ -18,7 +18,7 @@ let ffmpegPath=path.join(rootPath,CONF['ffmpegPath']);//ffmpeg.exe路径
 let buildFolderPath=`${rootPath}build`;//build路径
 let videoRootFolderPath=`${buildFolderPath}/${videoName}-${CONF['videoVersion']}`;//导出视频根目录路径
 let sourceFolderPath=`${videoRootFolderPath}/source`;//导出视频依赖资源路径
-let videoSourcePath=`${rootPath}video/${CONF['videoName']}`;//导入视频资源路径
+let videoSourcePath=`${rootPath}${CONF['videoPath']}`;//导入视频资源路径
 let gifPath=`${sourceFolderPath}/${gifName}`;//gif路径
 let mp3Path=`${sourceFolderPath}/${mp3Name}`;//mp3路径
 let pythonPath=`${rootPath}src/run/VideoToText.py`;//python脚本路径
@@ -32,7 +32,7 @@ let vttPath = `${vttFolderPath}/${vttName}`;//vtt文件路径
 let zipPath = `${zipFolderPath}/${zipName}`;//zip文件路径
 let txtPath = `${txtFolderPath}/${txtName}`;//txt文件路径
 let configPath = `${vttFolderPath}/${configName}`;//config文件路径
-let listPath =`${rootPath}src/html/list.json`;
+let listPath =`${rootPath}src/html/list.json`;//list.json文件路径
 
 //执行mian函数
 main();
