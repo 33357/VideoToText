@@ -40,12 +40,12 @@ function serveStatic(response, cache, absPath) {
 
 var server = http.createServer(function(request, response) {
     var filePath = false;
-    if (request.url == '/index.html') {
+    if (request.url == '/') {
         filePath = path.join(rootPath,'/src/html/index.html')
-    } else if(request.url == '/js/jszip.min.js'||request.url == '/js/jszip-utils.min.js'){
-        filePath = path.join(rootPath,'/lib' + request.url)
-    } else if(request.url == '/decode.js'){
-        filePath = path.join(rootPath,'/src/html/decode.js')
+    } else if(request.url.split('/')[1].split('?')[0]=='video.html'){
+        filePath = path.join(rootPath,'/src/html/video.html');
+    }else if(request.url.split('/')[1]=='html'){
+        filePath = path.join(rootPath,'/src' + request.url);
     } else {
         filePath =  path.join(rootPath,'/build' + request.url)
     }
@@ -55,5 +55,5 @@ var server = http.createServer(function(request, response) {
 });
 
 server.listen(3000, function() {
-    console.log("http://127.0.0.1:3000/index.html")
+    console.log("http://127.0.0.1:3000/")
 });

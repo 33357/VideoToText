@@ -1,39 +1,45 @@
 const fs=require('fs');
 const huffman=require('./huffman.js');
-
-function transcodeFile(txtPath,vttPath,CONF) {
-    let str=fs.readFileSync(txtPath+'.txt','utf8');
-    str=str.replace(/\r\n/g,'');
-    let value={};
-    let difference='';
-    for(let i=0;i<CONF['txtColor'].length;i++){
-        value[CONF['txtColor'][i]]=i;
-        difference+=String.fromCharCode("a".charCodeAt()+i);
+const { parentPort } = require('worker_threads');
+//编码文件
+function transcodeFile(txtPath,vttPath,CONF,index) {
+    let str = fs.readFileSync(txtPath + '.txt', 'utf8');
+    str = str.replace(/\r\n/g, '');
+    let value = {};
+    let difference = '';
+    for (let i = 0; i < CONF['txtColor'].length; i++) {
+        value[CONF['txtColor'][i]] = i;
+        difference += String.fromCharCode("a".charCodeAt() + i);
     }
-    let IPageStr=transcodeIPage(str,value,difference,CONF);
-    let data=transcodePPage(str,value,difference,CONF);
-    let IPIndex=data['IPIndex'];
-    let PPageStr=data['PPageStr'];
-    let BPageStr=transcodeBPage(str,value,difference,IPIndex,CONF);
-    let IPPageStr=IPageStr+PPageStr;
-    let IPHuffman=huffmanStr(IPPageStr,difference);
-    let IPBuf=strToBuffer(IPHuffman['bufferStr']);
+    let IPageStr = transcodeIPage(str, value, difference, CONF);
+    let data = transcodePPage(str, value, difference, CONF);
+    let IPIndex = data['IPIndex'];
+    let PPageStr = data['PPageStr'];
+    let BPageStr = transcodeBPage(str, value, difference, IPIndex, CONF);
+    let IPPageStr = IPageStr + PPageStr;
+    let IPHuffman = huffmanStr(IPPageStr, difference);
+    let IPBuf = strToBuffer(IPHuffman['bufferStr']);
     let Buf;
     let codeKeyMap;
-    if(BPageStr.length!=0){
-        let BHuffman=huffmanStr(BPageStr,difference);
-        let BBuf=strToBuffer(BHuffman['bufferStr']);
-        Buf=Buffer.concat([IPBuf,BBuf]);
-        codeKeyMap={IPPage:IPHuffman['codeKeyMap'],BPage:BHuffman['codeKeyMap'],IPLength:IPBuf.length,IPIndex:IPIndex}
-    }else{
-        Buf=IPBuf;
-        codeKeyMap={IPPage:IPHuffman['codeKeyMap']}
+    if (BPageStr.length != 0) {
+        let BHuffman = huffmanStr(BPageStr, difference);
+        let BBuf = strToBuffer(BHuffman['bufferStr']);
+        Buf = Buffer.concat([IPBuf, BBuf]);
+        codeKeyMap = {
+            IPPage: IPHuffman['codeKeyMap'],
+            BPage: BHuffman['codeKeyMap'],
+            IPLength: IPBuf.length,
+            IPIndex: IPIndex
+        }
+    } else {
+        Buf = IPBuf;
+        codeKeyMap = {IPPage: IPHuffman['codeKeyMap']}
     }
     fs.writeFileSync(`${vttPath}.vtt`, Buf);
-    console.log(`save ${vttPath}.vtt`+' success!');
-    return codeKeyMap
+    console.log(`save ${vttPath}.vtt` + ' success!');
+    parentPort.postMessage({codeKeyMap:codeKeyMap,index:index});
 }
-
+//string转buffer
 function strToBuffer(bufferStr) {
     let bufferArray=[];
     if(bufferStr.length%8!==0){
@@ -52,7 +58,7 @@ function strToBuffer(bufferStr) {
     }
     return Buffer.from(bufferArray);
 }
-
+//huffman编码
 function huffmanStr(str,difference) {
     let Huffman=new huffman.Huffman(str);
     let bufferStr=Huffman.encode();
@@ -63,7 +69,7 @@ function huffmanStr(str,difference) {
     }
     return{bufferStr:bufferStr,codeKeyMap:_codeKeyMa}
 }
-
+//编码I帧
 function transcodeIPage(str,value,difference,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -109,7 +115,7 @@ function transcodeIPage(str,value,difference,CONF) {
     }
     return IPageStr;
 }
-
+//编码P帧
 function transcodePPage(str,value,difference,CONF) {
     let beforeStr='';
     let PPageStr='';
@@ -151,7 +157,7 @@ function transcodePPage(str,value,difference,CONF) {
     }
     return {PPageStr:PPageStr,IPIndex:IPIndex};
 }
-
+//编码B帧
 function transcodeBPage(str,value,difference,IPIndex,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -189,8 +195,7 @@ function transcodeBPage(str,value,difference,IPIndex,CONF) {
     }
     return BPageStr;
 }
-//transcodeFile(`${rootPath}build/vtt/kai_w1020_h300_f12_z2_2`);
-
-module.exports = {
-    transcodeFile
-};
+//监听
+parentPort.on('message', (data) => {
+    transcodeFile(data['txtPath'],data['vttPath'],data['CONF'],data['index']);
+});

@@ -3,7 +3,7 @@ const fs=require('fs');
 
 let rootPath=path.join(__dirname, "../../");
 let print=require(`${rootPath}/lib/print`);
-
+//解码方法
 function decodeFile(vttPath,jsonPath,index) {
     let buf=new Uint8Array(fs.readFileSync(vttPath));
     let CONF=JSON.parse(fs.readFileSync(jsonPath));
@@ -21,7 +21,7 @@ function decodeFile(vttPath,jsonPath,index) {
     console.log(`save ${vttPath.replace('vtt','txt')}`+' success!');
     return HTML
 }
-
+//array转string
 function arrayToStr(array) {
     let bufferStr='';
     for(let i=0;i<array.length;i++){
@@ -37,7 +37,7 @@ function arrayToStr(array) {
     }
     return bufferStr
 }
-
+//string转html
 function strToHtml(IPageStr,PPageStrs,BPageStrs,CONF) {
     let html='';
     let pageStr='';
@@ -70,7 +70,7 @@ function strToHtml(IPageStr,PPageStrs,BPageStrs,CONF) {
     }
     return html
 }
-
+//string转array
 function strToArray(str,index,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -103,7 +103,7 @@ function strToArray(str,index,CONF) {
     }
     return {IPageArray:IPageArray,PPageArray:PPageArray,BPageArray:BPageArray}
 }
-
+//解码I帧
 function decodeIPage(IPageArray,value,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -155,7 +155,7 @@ function decodeIPage(IPageArray,value,CONF) {
     }
     return IPageStr;
 }
-
+//解码P帧
 function decodePPage(IPageStr,PPageArray,value,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -184,7 +184,7 @@ function decodePPage(IPageStr,PPageArray,value,CONF) {
     }
     return PPageStrs;
 }
-
+//解码B帧
 function decodeBPage(IPageStr,PPageStrs,BPageArray,value,CONF,index) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];

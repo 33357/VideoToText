@@ -1,3 +1,14 @@
+const { Worker, isMainThread, parentPort } = require('worker_threads');
 
-str=`12\n\n36\n24`;
-console.log(str.replace(/2/g,''));
+if (isMainThread) {
+    const worker = new Worker(__filename);
+    worker.once('message', (message) => {
+        console.log(message);  // Prints 'Hello, world!'.
+    });
+    worker.postMessage('Hello, world!');
+} else {
+    // When a message from the parent thread is received, send it back:
+    parentPort.once('message', (message) => {
+        parentPort.postMessage(message);
+    });
+}

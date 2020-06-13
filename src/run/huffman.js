@@ -3,22 +3,16 @@ function Node(left, right, data) {
     this.right = right;
     this.data = data;
 }
+//节点
 
 function Huffman(str) {
-    // 需要编码的字符串
-    this.str = str;
-    // 键和频率映射表
-    this.keyCountMap = null;
-    // 编码和键的映射表
-    this.codeKeyMap = {};
-    // 键和编码的映射表
-    this.keyCodeMap = {};
-    // 哈夫曼树节点列表
-    this.nodeList = null;
-    // 哈夫曼树根节点
-    this.root = null;
-    // 哈夫曼编码后的01序列
-    this.code = null;
+    this.str = str;// 需要编码的字符串
+    this.keyCountMap = null;// 键和频率映射表
+    this.codeKeyMap = {}; // 编码和键的映射表
+    this.keyCodeMap = {}; // 键和编码的映射表
+    this.nodeList = null; // 哈夫曼树节点列表
+    this.root = null;// 哈夫曼树根节点
+    this.code = null; // 哈夫曼编码后的01序列
 
     this.cal =  function cal() {
         str = this.str;
@@ -29,7 +23,7 @@ function Huffman(str) {
             i++;
         }
         this.keyCountMap = map;
-    }
+    };
 
     this.sort = function sort() {
         map = this.keyCountMap;
@@ -44,7 +38,8 @@ function Huffman(str) {
             }
         }
         this.nodeList = result.sort(function(x,y){return x.data.val > y.data.val});
-    }
+    };
+
     this.makeTree = function makeTree() {
         var i = 0;
         var len = this.nodeList.length;
@@ -60,7 +55,7 @@ function Huffman(str) {
         }
         this.root = table[0] || new Node();
         return this.root;
-    }
+    };
 
     this.traversal = function traversal(tree, code) {
         if (tree.left !== null) {
@@ -73,7 +68,8 @@ function Huffman(str) {
         } else {
             this.keyCodeMap[tree.data.key] = code;
         }
-    }
+    };
+
     this.encode = function encode() {
         this.cal();
         this.sort();
@@ -89,7 +85,7 @@ function Huffman(str) {
         this.code = result;
         this.reverseMap();
         return result
-    }
+    };
 
     this.reverseMap = function reverseMap() {
         var ret = this.keyCodeMap;
@@ -101,7 +97,8 @@ function Huffman(str) {
         }
         this.codeKeyMap = result;
         return result;
-    }
+    };
+
     this.decode = function decode() {
         var i = 0;
         var result = '';

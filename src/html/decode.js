@@ -7,7 +7,7 @@ self.addEventListener("error",errorHandler,true);
 function errorHandler(e) {
     console.log(e.message.e)
 }
-
+//解码方法
 function decodeData(array,config,vttIndex,zipIndex) {
     let CONF=config;
     let value={};
@@ -23,7 +23,7 @@ function decodeData(array,config,vttIndex,zipIndex) {
     postMessage({html:HTML,vttIndex:vttIndex,zipIndex:zipIndex});
     return HTML
 }
-
+//array转string
 function arrayToStr(array) {
     let bufferStr='';
     for(let i=0;i<array.length;i++){
@@ -39,7 +39,7 @@ function arrayToStr(array) {
     }
     return bufferStr
 }
-
+//string转html
 function strToHtml(IPageStr,PPageStrs,BPageStrs,CONF) {
     let html='';
     let pageStr='';
@@ -72,7 +72,7 @@ function strToHtml(IPageStr,PPageStrs,BPageStrs,CONF) {
     }
     return html
 }
-
+//string转array
 function strToArray(str,index,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -106,7 +106,7 @@ function strToArray(str,index,CONF) {
     }
     return {IPageArray:IPageArray,PPageArray:PPageArray,BPageArray:BPageArray}
 }
-
+//解码I帧
 function decodeIPage(IPageArray,value,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -158,7 +158,7 @@ function decodeIPage(IPageArray,value,CONF) {
     }
     return IPageStr;
 }
-
+//解码P帧
 function decodePPage(IPageStr,PPageArray,value,CONF) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];
@@ -187,7 +187,7 @@ function decodePPage(IPageStr,PPageArray,value,CONF) {
     }
     return PPageStrs;
 }
-
+//解码B帧
 function decodeBPage(IPageStr,PPageStrs,BPageArray,value,CONF,index) {
     let height=CONF['gifHeight']/CONF['txtZoom'];
     let width=CONF['gifWidth']/CONF['txtZoom'];

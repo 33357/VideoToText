@@ -1,133 +1,141 @@
 const path = require('path');
-const jsZip = require('jszip');
 const fs=require('fs');
 const childProcess = require('child_process');
+const {Worker} = require('worker_threads');
 
-let rootPath=path.join(__dirname, "../../");
-let transcode=require('./transcode');
-let jsonPath=`${rootPath}config.json`;
-const CONF=JSON.parse(fs.readFileSync(jsonPath));
-let videoName=CONF['videoName'].split('.')[0];
-let folderName=`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;
-let txtName = folderName+`_z${CONF['txtZoom']}`;
-let vttName = txtName+`_b${CONF['vttBPage']}`;
-let zipName = vttName;
-let gifName =`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;
-let mp3Name=`${videoName}_${CONF['mp3Bit']}`;
-let ffmpegPath=path.join(rootPath,CONF['ffmpegPath']);
-let buildFolderPath=`${rootPath}build`;
-let videoRootFolderPath=`${buildFolderPath}/${videoName}-${CONF['codeVersion']}`;
-let sourceFolderPath=`${videoRootFolderPath}/source`;
-let videoSourcePath=`${rootPath}video/${CONF['videoName']}`;
-let gifPath=`${sourceFolderPath}/${gifName}`;
-let mp3Path=`${sourceFolderPath}/${mp3Name}`;
-let pythonPath=`${rootPath}src/run/VideoToText.py`;
-let videoFolderPath=`${videoRootFolderPath}/${folderName}`;
-let vttRootFolderPath=`${videoFolderPath}/vtt`;
-let zipRootFolderPath=`${videoFolderPath}/zip`;
-let txtRootFolderPath=`${videoFolderPath}/txt`;
-let vttFolderPath=`${vttRootFolderPath}/${vttName}`;
-let zipFolderPath=`${zipRootFolderPath}/${zipName}`;
-let txtFolderPath=`${txtRootFolderPath}/${txtName}`;
-let vttPath = `${vttFolderPath}/${vttName}`;
-let zipPath = `${zipFolderPath}/${zipName}`;
-let txtPath = `${txtFolderPath}/${txtName}`;
+let rootPath=path.join(__dirname, "../../");//项目根目录路径
+let jsonPath=`${rootPath}config.json`;//config.json路径
+const CONF=JSON.parse(fs.readFileSync(jsonPath));//引入config.json
+let videoName=CONF['videoName'].split('.')[0];//导入视频名
+let videoFolderName=`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;//导出视频文件名
+let txtName = videoFolderName+`_z${CONF['txtZoom']}`;//txt文件名
+let vttName = txtName+`_b${CONF['vttBPage']}`;//vtt文件名
+let zipName = vttName;//zip文件名
+let gifName =`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;//gif文件名
+let mp3Name=`${videoName}_${CONF['mp3Bit']}`;//mp3文件名
+let configName=`${vttName}_config`;//config文件名
+let ffmpegPath=path.join(rootPath,CONF['ffmpegPath']);//ffmpeg.exe路径
+let buildFolderPath=`${rootPath}build`;//build路径
+let videoRootFolderPath=`${buildFolderPath}/${videoName}-${CONF['videoVersion']}`;//导出视频根目录路径
+let sourceFolderPath=`${videoRootFolderPath}/source`;//导出视频依赖资源路径
+let videoSourcePath=`${rootPath}video/${CONF['videoName']}`;//导入视频资源路径
+let gifPath=`${sourceFolderPath}/${gifName}`;//gif路径
+let mp3Path=`${sourceFolderPath}/${mp3Name}`;//mp3路径
+let pythonPath=`${rootPath}src/run/VideoToText.py`;//python脚本路径
+let videoFolderPath=`${videoRootFolderPath}/${videoFolderName}`;//导出视频目录路径
+let vttRootFolderPath=`${videoFolderPath}/vtt`;//vtt根目录路径
+let txtRootFolderPath=`${videoFolderPath}/txt`;//txt根目录路径
+let vttFolderPath=`${vttRootFolderPath}/${vttName}`;//vtt文件夹路径
+let zipFolderPath=`${videoFolderPath}/${zipName}`;//zip文件夹路径
+let txtFolderPath=`${txtRootFolderPath}/${txtName}`;//txt文件夹路径
+let vttPath = `${vttFolderPath}/${vttName}`;//vtt文件路径
+let zipPath = `${zipFolderPath}/${zipName}`;//zip文件路径
+let txtPath = `${txtFolderPath}/${txtName}`;//txt文件路径
+let configPath = `${vttFolderPath}/${configName}`;//config文件路径
+let listPath =`${rootPath}src/html/list.json`;
 
-Main();
-
-async function ZipData(fileName){
-    let zip = new jsZip();
-    let i=1;
-    let codeKeyMaps=[];
-    let IPLength=[];
-    let IPIndex=[];
-    let vttNames=[];
-    if (!fs.existsSync(vttRootFolderPath)) {
-        fs.mkdirSync(vttRootFolderPath)
-    }
-    if (!fs.existsSync(vttFolderPath)) {
-        fs.mkdirSync(vttFolderPath)
-    }
-    for(let j=1;;j++){
-        if (fs.existsSync(`${zipPath}_${j}.zip`)) {
-            i+=CONF['zipSeconds']/CONF['vttSeconds'];
-            console.log(`skip ${zipPath}_${j}.zip`)
-        }else{
-            break
-        }
-    }
-    for(;;i++){
-        if (fs.existsSync(`${txtPath}_${i}.txt`)) {
-            let transcodeData=transcode.transcodeFile(`${txtPath}_${i}`,`${vttPath}_${i}`,CONF);
-            codeKeyMaps.push({IPPage:transcodeData['IPPage'],BPage:transcodeData['BPage']});
-            IPLength.push(transcodeData['IPLength']);
-            IPIndex.push(transcodeData['IPIndex']);
-            let data=fs.readFileSync(`${vttPath}_${i}.vtt`);
-            zip.file(`${vttName}_${i}.vtt`, data);
-            vttNames.push(`${vttName}_${i}.vtt`);
-            if(i%(CONF['zipSeconds']/CONF['vttSeconds'])==0){
-                CONF['vttNames']=vttNames;
-                CONF['codeKeyMaps']=codeKeyMaps;
-                CONF['IPLength']=IPLength;
-                CONF['IPIndex']=IPIndex;
-                zip.file(`config.json`, JSON.stringify(CONF));
-                await doZip(zip,fileName,i/(CONF['zipSeconds']/CONF['vttSeconds']));
-                codeKeyMaps=[];
-                vttNames=[];
-                IPLength=[];
-                IPIndex=[];
-                zip=new jsZip();
+//执行mian函数
+main();
+//TXT转VTT
+function TXTtoVTT() {
+    return new Promise(function(reslove) {
+        let out = 0;
+        let time = new Date();
+        let index = 1;
+        for(let j=1;;j++){
+            if (fs.existsSync(`${vttPath}_${j}.vtt`)&&fs.existsSync(`${configPath}_${j}.json`)) {
+                index+=1;
+                console.log(`skip ${vttPath}_${j}.vtt`)
+            }else{
+                break
             }
-        } else {
-            if((i-1)%(CONF['zipSeconds']/CONF['vttSeconds'])!=0){
-                CONF['vttNames']=vttNames;
-                CONF['codeMaps']=codeKeyMaps;
-                CONF['IPLength']=IPLength;
-                CONF['IPIndex']=IPIndex;
-                zip.file(`config.json`, JSON.stringify(CONF));
-                await doZip(zip,fileName,Math.ceil(i/(CONF['zipSeconds']/CONF['vttSeconds'])))
-            }
-            break;
         }
-    }
-    copyMP3(fileName)
+        for (let i = 0; i < CONF['nodeThreads']; i++) {
+            if (fs.existsSync(`${txtPath}_${index}.txt`)) {
+                const worker = new Worker(`${rootPath}/src/run/transcode.js`);
+                worker.on('message', (data) => {
+                    let transcodeData=data;
+                    fs.writeFileSync(`${configPath}_${transcodeData['index']}.json`,JSON.stringify(transcodeData['codeKeyMap']));
+                    if (fs.existsSync(`${txtPath}_${index}.txt`)) {
+                        worker.postMessage({txtPath: `${txtPath}_${index}`,vttPath:`${vttPath}_${index}`, CONF: CONF, index: index});
+                        index++;
+                    } else {
+                        worker.terminate();
+                        out++;
+                        if(out==CONF['nodeThreads']){
+                            console.log((new Date() - time) / (1000 * 60) + 'min');
+                            reslove('success');
+                        }
+                    }
+                });
+                worker.postMessage({txtPath: `${txtPath}_${index}`, vttPath:`${vttPath}_${index}`, CONF: CONF, index: index});
+                index++;
+            } else {
+                out++;
+                if(out==CONF['nodeThreads']){
+                    console.log((new Date() - time) / (1000 * 60) + 'min');
+                    reslove('success');
+                }
+            }
+        }
+    });
 }
-
-
+//VTT转ZIP
+async function VTTToZIP() {
+    return new Promise(function(reslove) {
+        let out = 0;
+        let time = new Date();
+        let index=1;
+        for(let j=1;;j++){
+            if (fs.existsSync(`${zipPath}_${j}.zip`)) {
+                index+=CONF['zipSeconds']/CONF['vttSeconds'];
+                console.log(`skip ${zipPath}_${j}.zip`)
+            }else{
+                break;
+            }
+        }
+        for (let j = 0; j < CONF['nodeThreads']; j++) {
+            if (fs.existsSync(`${vttPath}_${index}.vtt`)&&fs.existsSync(`${configPath}_${index}.json`)) {
+                const worker = new Worker(`${rootPath}/src/run/zip.js`);
+                worker.on('message', () => {
+                    if (fs.existsSync(`${vttPath}_${index}.vtt`)&&fs.existsSync(`${configPath}_${index}.json`)) {
+                        worker.postMessage({index:index,zipFolderPath:zipFolderPath,zipPath:zipPath,vttPath:vttPath,configPath:configPath,vttName:vttName,CONF:CONF});
+                        index+=CONF['zipSeconds']/CONF['vttSeconds'];
+                    } else {
+                        worker.terminate();
+                        out++;
+                        if(out==CONF['nodeThreads']){
+                            console.log((new Date() - time) / (1000 * 60) + 'min');
+                            reslove('success');
+                        }
+                    }
+                });
+                worker.postMessage({index:index,zipFolderPath:zipFolderPath,zipPath:zipPath,vttPath:vttPath,configPath:configPath,vttName:vttName,CONF:CONF});
+                index+=CONF['zipSeconds']/CONF['vttSeconds'];
+            } else {
+                out++;
+                if(out==CONF['nodeThreads']){
+                    console.log((new Date() - time) / (1000 * 60) + 'min');
+                    reslove('success');
+                }
+            }
+        }
+    });
+}
+//复制mp3
 function copyMP3() {
     fs.copyFile(`${mp3Path}.mp3`,`${zipFolderPath}/${videoName}.mp3`,function(err){
-        if(err) console.log(err);
-        else console.log('save '+`${zipFolderPath}/${videoName}.mp3`+' succeed');
+        if(err){
+            console.log(err);
+        }else {
+            console.log('save '+`${zipFolderPath}/${videoName}.mp3`+' succeed');
+        }
     })
 }
-
-function doZip(zip,fileName,index) {
-    if (!fs.existsSync(zipRootFolderPath)) {
-        fs.mkdirSync(zipRootFolderPath)
-    }
-    if (!fs.existsSync(zipFolderPath)) {
-        fs.mkdirSync(zipFolderPath)
-    }
-    return new Promise(function(reslove) {
-        zip.generateAsync({
-            type:"nodebuffer",
-            compression: "DEFLATE",
-            compressionOptions: {
-                level: 9
-            }
-        }, function updateCallback(metadata) {
-            console.log("progression: " + metadata.percent.toFixed(2) + " %");
-        }).then(function(content) {
-            fs.writeFileSync(`${zipPath}_${index}.zip`, content);
-            console.log('save '+`${zipPath}_${index}.zip`+' success!');
-            reslove('success');
-        });
-    })
-}
-
+//video转gif
 function VideoToGIF(ffmpegPath,videoPath,width,height,frame,gifPath){
     return new Promise(function(reslove){
-        var workerProcess = childProcess.spawn(ffmpegPath,['-i',videoPath, '-s',`${width}*${height}` ,'-r',frame,gifPath]);
+        let workerProcess = childProcess.spawn(ffmpegPath,['-i',videoPath, '-s',`${width}*${height}` ,'-r',frame,gifPath]);
         workerProcess.stdout.on('data', function (data) {
             console.log('stdout: ' + data);
         });
@@ -140,10 +148,10 @@ function VideoToGIF(ffmpegPath,videoPath,width,height,frame,gifPath){
         });
     })
 }
-
+//video转mp3
 function VideoToMP3(ffmpegPath,videoPath,mp3Bit,mp3Path){
     return new Promise(function(reslove){
-        var workerProcess = childProcess.spawn(ffmpegPath,['-i', videoPath, '-vn', '-acodec','libmp3lame','-ac', '2', '-ab', mp3Bit ,'-ar' ,'48000', mp3Path]);
+        let workerProcess = childProcess.spawn(ffmpegPath,['-i', videoPath, '-vn', '-acodec','libmp3lame','-ac', '2', '-ab', mp3Bit ,'-ar' ,'48000', mp3Path]);
         workerProcess.stdout.on('data', function (data) {
             console.log('stdout: ' + data);
         });
@@ -156,37 +164,33 @@ function VideoToMP3(ffmpegPath,videoPath,mp3Bit,mp3Path){
         });
     });
 }
-
-function SplitGIF(){
-    var out=0;
-    var time=new Date();
-    if (!fs.existsSync(txtRootFolderPath)) {
-        fs.mkdirSync(txtRootFolderPath)
-    }
-    if(!fs.existsSync(txtFolderPath)){
-        fs.mkdirSync(txtFolderPath)
-    }
-    for(var i=0;i<CONF['pythonThreads'];i++){
-        var workerProcess = childProcess.spawn('python',[pythonPath,i,gifPath,txtPath,jsonPath]);
-        console.log('start'+(i+1)+'thread');
-        workerProcess.stdout.on('data', function (data) {
-            console.log('stdout: ' + data);
-        });
-        workerProcess.stderr.on('data', function (data) {
-            console.log('stderr: ' + data);
-        });
-        workerProcess.on('exit', function () {
-            out++;
-            console.log('save txt success!'+out);
-            if(out==CONF['pythonThreads']){
-                console.log((new Date()-time)/(1000*60)+'min');
-                ZipData()
-            }
-        });
-    }
+//gif转txt
+function GIFToTXT(){
+    return new Promise(function(reslove) {
+        let out = 0;
+        let time = new Date();
+        for (let i = 0; i < CONF['pythonThreads']; i++) {
+            let workerProcess = childProcess.spawn('python', [pythonPath, i, gifPath, txtPath, jsonPath]);
+            console.log('start' + (i + 1) + 'thread');
+            workerProcess.stdout.on('data', function (data) {
+                console.log('stdout: ' + data);
+            });
+            workerProcess.stderr.on('data', function (data) {
+                console.log('stderr: ' + data);
+            });
+            workerProcess.on('exit', function () {
+                out++;
+                console.log('save txt success!' + out);
+                if (out == CONF['pythonThreads']) {
+                    console.log((new Date() - time) / (1000 * 60) + 'min');
+                    reslove('success');
+                }
+            });
+        }
+    })
 }
-
-async function Main() {
+//检查文件夹
+function checkFolder(){
     if(!fs.existsSync(buildFolderPath)){
         fs.mkdirSync(buildFolderPath)
     }
@@ -196,14 +200,75 @@ async function Main() {
     if(!fs.existsSync(sourceFolderPath)){
         fs.mkdirSync(sourceFolderPath)
     }
-    if(!fs.existsSync(gifPath+'.gif')) {
-        await VideoToGIF(ffmpegPath,videoSourcePath,CONF['gifWidth'],CONF['gifHeight'],CONF['gifFrame'],gifPath+'.gif')
-    }
-    if(!fs.existsSync(mp3Path+'.mp3')) {
-        await VideoToMP3(ffmpegPath,videoSourcePath,CONF['mp3Bit'],mp3Path+'.mp3')
-    }
     if(!fs.existsSync(videoFolderPath)){
         fs.mkdirSync(videoFolderPath)
     }
-    SplitGIF();
+    if (!fs.existsSync(txtRootFolderPath)) {
+        fs.mkdirSync(txtRootFolderPath)
+    }
+    if (!fs.existsSync(txtFolderPath)) {
+        fs.mkdirSync(txtFolderPath)
+    }
+    if (!fs.existsSync(vttRootFolderPath)) {
+        fs.mkdirSync(vttRootFolderPath)
+    }
+    if (!fs.existsSync(vttFolderPath)) {
+        fs.mkdirSync(vttFolderPath)
+    }
+    if (!fs.existsSync(zipFolderPath)) {
+        fs.mkdirSync(zipFolderPath)
+    }
+}
+//添加video到list
+function addVideoToList(){
+    let list;
+    if(fs.existsSync(vttFolderPath)){
+        list=JSON.parse(fs.readFileSync(listPath));
+    }else{
+        list={videos:[]};
+    }
+    let src=zipFolderPath.replace(`${rootPath}build`,'.');
+    let isAdd=true;
+    for(let i=0;i<list['videos'].length;i++){
+        if(list['videos'][i]['src']==src){
+            isAdd=false;
+            break;
+        }
+    }
+    if(isAdd==true){
+        list['videos'].push({
+            name:videoFolderName,
+            src:src
+        });
+        fs.writeFileSync(listPath,JSON.stringify(list)+'/');
+        console.log('add video',src);
+    }else {
+        console.log('skip video',src);
+    }
+}
+//main函数,程序主逻辑
+async function main() {
+    let time = new Date();
+    //检查文件夹
+    checkFolder();
+    //生成gif
+    if(!fs.existsSync(gifPath+'.gif')) {
+        await VideoToGIF(ffmpegPath,videoSourcePath,CONF['gifWidth'],CONF['gifHeight'],CONF['gifFrame'],gifPath+'.gif')
+    }
+    //生成mp3
+    if(!fs.existsSync(mp3Path+'.mp3')) {
+        await VideoToMP3(ffmpegPath,videoSourcePath,CONF['mp3Bit'],mp3Path+'.mp3')
+    }
+    //gif转txt
+    await GIFToTXT();
+    //txt转vtt
+    await TXTtoVTT();
+    //vtt转zip
+    await VTTToZIP();
+    //复制mp3
+    await copyMP3();
+    //添加video路径
+    addVideoToList();
+    //显示时间
+    console.log((new Date() - time) / (1000 * 60) + 'min');
 }
