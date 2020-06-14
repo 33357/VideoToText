@@ -28,8 +28,6 @@
 </div>
 </body>
 <script>
-    let sourceUrl='http://source.videototext.top';
-    let isPublic=true;//模式切换
     const setWorkers=5;//webworker线程数
     let workers=setWorkers;//webworker线程数变量
     let list=[];//webworker的工作list
@@ -61,11 +59,7 @@
     //获取
     requireZips();
     //加载音频
-    if(isPublic==true){
-        audio.src=(zipFolderUrl+zipFolderUrl.split('/')[1].split('_')[0]+'.mp3').replace('.',sourceUrl);
-    }else{
-        audio.src=(zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3').replace('.',sourceUrl);
-    }
+    audio.src=(zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3');
     audio.load();
     //获取src
     function getSrc(url) {
@@ -137,12 +131,7 @@
     }
     //获取zip
     function RequireZip(zipIndex){
-        let url;
-        if(isPublic==true){
-            url=(zipFolderUrl+zipFolderUrl.split('/')[1]+'_'+zipIndex+'.zip').replace('.',sourceUrl);
-        }else{
-            url=(zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip').replace('.',sourceUrl);
-        }
+        let url=(zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip');
         JSZipUtils.getBinaryContent(url, function(err, data) {
             if (err) {
                 console.log(err);
