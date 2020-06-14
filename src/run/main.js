@@ -8,7 +8,7 @@ let jsonPath=`${rootPath}config.json`;//config.json路径
 const CONF=JSON.parse(fs.readFileSync(jsonPath));//引入config.json
 let videoName=CONF['videoPath'].split('/')[2].split('.')[0];//导入视频名
 let videoFolderName=`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;//导出视频文件名
-let txtName = videoFolderName+`_z${CONF['txtZoom']}`;//txt文件名
+let txtName = videoFolderName+`_z${CONF['txtZoom']}_v${CONF['vttSeconds']}_z${CONF['zipSeconds']}`;//txt文件名
 let vttName = txtName+`_b${CONF['vttBPage']}`;//vtt文件名
 let zipName = vttName;//zip文件名
 let gifName =`${videoName}_w${CONF['gifWidth']}_h${CONF['gifHeight']}_f${CONF['gifFrame']}`;//gif文件名
@@ -222,7 +222,7 @@ function checkFolder(){
 //添加video到list
 function addVideoToList(){
     let list;
-    if(fs.existsSync(vttFolderPath)){
+    if(fs.existsSync(listPath)){
         list=JSON.parse(fs.readFileSync(listPath));
     }else{
         list={videos:[]};
@@ -237,10 +237,10 @@ function addVideoToList(){
     }
     if(isAdd==true){
         list['videos'].push({
-            name:videoFolderName,
-            src:src
+            name:zipName,
+            src:src+'/'
         });
-        fs.writeFileSync(listPath,JSON.stringify(list)+'/');
+        fs.writeFileSync(listPath,JSON.stringify(list));
         console.log('add video',src);
     }else {
         console.log('skip video',src);

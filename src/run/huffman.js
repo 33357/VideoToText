@@ -37,14 +37,11 @@ function Huffman(str) {
                 result.push(new Node(null, null, obj));
             }
         }
-        this.nodeList = result.sort(function(x,y){return x.data.val > y.data.val});
+        this.nodeList = result.sort(function(x,y){return x.data.val - y.data.val});
     };
 
     this.makeTree = function makeTree() {
         var i = 0;
-        var len = this.nodeList.length;
-        var node1;
-        var node2;
         var parentNode;
         var table = this.nodeList;
         while(table.length > 1) {

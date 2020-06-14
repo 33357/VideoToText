@@ -37,7 +37,7 @@ function transcodeFile(txtPath,vttPath,CONF,index) {
     }
     fs.writeFileSync(`${vttPath}.vtt`, Buf);
     console.log(`save ${vttPath}.vtt` + ' success!');
-    parentPort.postMessage({codeKeyMap:codeKeyMap,index:index});
+   parentPort.postMessage({codeKeyMap:codeKeyMap,index:index});
 }
 //string转buffer
 function strToBuffer(bufferStr) {
@@ -195,6 +195,8 @@ function transcodeBPage(str,value,difference,IPIndex,CONF) {
     }
     return BPageStr;
 }
+
+//transcodeFile('F:\\clone\\VideoToTextServer\\build\\kai-1.0.0\\kai_w1020_h300_f12\\txt\\kai_w1020_h300_f12_z2_v5_z60\\kai_w1020_h300_f12_z2_v5_z60_1','F:\\clone\\VideoToTextServer\\build\\kai-1.0.0\\kai_w1020_h300_f12\\txt\\kai_w1020_h300_f12_z2_v5_z60\\kai_w1020_h300_f12_z2_v5_z60_1',CONF);
 //监听
 parentPort.on('message', (data) => {
     transcodeFile(data['txtPath'],data['vttPath'],data['CONF'],data['index']);

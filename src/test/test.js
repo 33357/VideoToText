@@ -1,14 +1,8 @@
-const { Worker, isMainThread, parentPort } = require('worker_threads');
 
-if (isMainThread) {
-    const worker = new Worker(__filename);
-    worker.once('message', (message) => {
-        console.log(message);  // Prints 'Hello, world!'.
-    });
-    worker.postMessage('Hello, world!');
-} else {
-    // When a message from the parent thread is received, send it back:
-    parentPort.once('message', (message) => {
-        parentPort.postMessage(message);
-    });
+function compare(prop){
+    return function (a,b) {
+        return
+    }
 }
+
+console.log([{x:1},{x:9},{x:2},{x:3}].sort(function(x,y){return x.x - y.x}))

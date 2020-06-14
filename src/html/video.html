@@ -27,7 +27,8 @@
 </div>
 </body>
 <script>
-    let workers=4;//webworker线程数
+    const setWorkers=5;//webworker线程数
+    let workers=setWorkers;//webworker线程数变量
     let list=[];//webworker的工作list
     let pageNum = 1;//当前页面数
     let vttNum=1;//当前vtt数
@@ -148,8 +149,8 @@
     //载入html
     function loadHTML(newPageNum,newVttNum){
         let html='';
-        if(parseInt(newVttNum/(config['zipSeconds']/config['vttSeconds']))==zipNum-2){
-            if(list.length==0){
+        if((zipNum-1)*config['zipSeconds']-newVttNum*config['vttSeconds']<=60){
+            if(list.length==0&&workers==setWorkers){
                 requireZips();
             }
         }
@@ -318,7 +319,7 @@
         isPause=true;
         audio.pause();
         let idPause=document.getElementById("pause");
-        idPause.innerText='暂停';
+        idPause.innerText='继续';
     }
     //暂停
     function Pause(){

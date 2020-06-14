@@ -13,7 +13,7 @@
     $.ajax({ url: "./html/list.json", success: function(json){
         let html='';
         for(let i=0;i<json['videos'].length;i++){
-            html+=`<a href="./video.html?src=${json['videos'][i]['src']}" style="font-size: 50px">${json['videos'][i]['name']}</a>`
+            html+=`<a href="./video.html?src=${json['videos'][i]['src']}" style="font-size: 50px">${json['videos'][i]['name']}</a><br />`
         }
         goto.innerHTML=html;
     }});
