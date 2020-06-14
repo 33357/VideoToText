@@ -1,7 +1,7 @@
 # VideoToTextServer
 视频转文本服务器
 
-效果预览：http://videototext.top
+效果预览：http://videototext.top  （建议使用firefox浏览器浏览该网站）
 
 本服务基于python3和nodejs，要想使用请先配置好环境
 
