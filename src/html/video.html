@@ -27,6 +27,7 @@
 </div>
 </body>
 <script>
+    let isPublic=false;//模式切换
     const setWorkers=5;//webworker线程数
     let workers=setWorkers;//webworker线程数变量
     let list=[];//webworker的工作list
@@ -44,6 +45,8 @@
     let HTML=[];//HTML存储空间
     let config=[];//配置变量
     let loadText="加载中。。。";//加载文本
+    let downloadText="下载中。。。";//下载文本
+    let isDownload=true;//下载状态
     let loadIndex=1;//加载index
     let loadTimer;//加载循环控件
     let allLoad=false;//是否全部加载完毕
@@ -56,7 +59,11 @@
     //获取
     requireZips();
     //加载音频
-    audio.src=zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3';
+    if(isPublic==true){
+        audio.src=zipFolderUrl+zipFolderUrl.split('/')[1].split('_')[0]+'.mp3';
+    }else{
+        audio.src=zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3';
+    }
     audio.load();
     //获取src
     function getSrc(url) {
@@ -128,11 +135,18 @@
     }
     //获取zip
     function RequireZip(zipIndex){
-        JSZipUtils.getBinaryContent(zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip', function(err, data) {
+        let url;
+        if(isPublic==true){
+            url=zipFolderUrl+zipFolderUrl.split('/')[1]+'_'+zipIndex+'.zip';
+        }else{
+            url=zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip';
+        }
+        JSZipUtils.getBinaryContent(url, function(err, data) {
             if (err) {
                 console.log(err);
                 allLoad=true;
             } else {
+                isDownload=false;
                 console.log('RequireZip',zipIndex);
                 let jszip=new JSZip();
                 jszip.loadAsync(data).then(async function (zip) {
@@ -244,7 +258,7 @@
         if(min.length!=2){
             min='0'+min;
         }
-        idShowTime.innerText=min+':'+sec+'/'+pregress+'/'+long;
+        idShowTime.innerText='当前时长：'+min+':'+sec+'/'+'已加载时长：'+pregress+'/'+'总时长：'+long;
     }
     //获取进度
     function getProgress() {
@@ -274,7 +288,11 @@
     }
     //刷新加载
     function showLoad() {
-        idLoad.innerText=loadText.substring(0,loadIndex);
+        if(isDownload==true){
+            idLoad.innerText=downloadText.substring(0,loadIndex);
+        }else{
+            idLoad.innerText=loadText.substring(0,loadIndex);
+        }
         loadIndex++;
         if(loadIndex>loadText.length){
             loadIndex=1

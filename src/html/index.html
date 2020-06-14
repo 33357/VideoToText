@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <title>Title</title>
 </head>
-<body>
+<body style="text-align: center">
+    <div style="font-size: 50px">本网站提供文本视频服务。</div>
+    <div style="font-size: 50px">项目Github开源地址：<a href="https://github.com/33357/VideoToTextServer" target="_blank">https://github.com/33357/VideoToTextServer</a></div>
+    <div style="font-size: 50px">本项目第一适配浏览器为firefox浏览器，建议使用firefox浏览器浏览本网站</div>
     <div id="goto"></div>
 </body>
 <script>
@@ -13,7 +16,7 @@
     $.ajax({ url: "./html/list.json", success: function(json){
         let html='';
         for(let i=0;i<json['videos'].length;i++){
-            html+=`<a href="./video.html?src=${json['videos'][i]['src']}" style="font-size: 50px">${json['videos'][i]['name']}</a><br />`
+            html+=`<a href="./video.html?src=${json['videos'][i]['src']}" style="font-size: 50px" target="_blank">${json['videos'][i]['name']}</a><br />`
         }
         goto.innerHTML=html;
     }});
