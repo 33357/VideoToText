@@ -5,6 +5,7 @@
     <script src="./html/js/jszip-utils.min.js"></script>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>pre { font-size:10px; line-height:4px;}</style>
+    <title>VideoToText</title>
 </head>
 <body>
 <div id="pre"></div>
@@ -27,7 +28,8 @@
 </div>
 </body>
 <script>
-    let isPublic=false;//模式切换
+    let sourceUrl='http://source.videototext.top';
+    let isPublic=true;//模式切换
     const setWorkers=5;//webworker线程数
     let workers=setWorkers;//webworker线程数变量
     let list=[];//webworker的工作list
@@ -60,9 +62,9 @@
     requireZips();
     //加载音频
     if(isPublic==true){
-        audio.src=zipFolderUrl+zipFolderUrl.split('/')[1].split('_')[0]+'.mp3';
+        audio.src=(zipFolderUrl+zipFolderUrl.split('/')[1].split('_')[0]+'.mp3').replace('.',sourceUrl);
     }else{
-        audio.src=zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3';
+        audio.src=(zipFolderUrl+zipFolderUrl.split('/')[1].split('-')[0]+'.mp3').replace('.',sourceUrl);
     }
     audio.load();
     //获取src
@@ -137,9 +139,9 @@
     function RequireZip(zipIndex){
         let url;
         if(isPublic==true){
-            url=zipFolderUrl+zipFolderUrl.split('/')[1]+'_'+zipIndex+'.zip';
+            url=(zipFolderUrl+zipFolderUrl.split('/')[1]+'_'+zipIndex+'.zip').replace('.',sourceUrl);
         }else{
-            url=zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip';
+            url=(zipFolderUrl+zipFolderUrl.split('/')[3]+'_'+zipIndex+'.zip').replace('.',sourceUrl);
         }
         JSZipUtils.getBinaryContent(url, function(err, data) {
             if (err) {
