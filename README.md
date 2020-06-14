@@ -1,5 +1,5 @@
-# VideoToTextServer
-视频转文本服务器
+# VideoToText
+视频转文本
 
 效果预览：http://videototext.top  （建议使用PC firefox浏览器浏览该网站）
 
