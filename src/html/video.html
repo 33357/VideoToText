@@ -28,7 +28,7 @@
 </div>
 </body>
 <script>
-    const setWorkers=5;//webworker线程数
+    const setWorkers=4;//webworker线程数
     let workers=setWorkers;//webworker线程数变量
     let list=[];//webworker的工作list
     let pageNum = 1;//当前页面数
@@ -46,7 +46,7 @@
     let config=[];//配置变量
     let loadText="加载中。。。";//加载文本
     let downloadText="下载中。。。";//下载文本
-    let isDownload=true;//下载状态
+    let isDownload=false;//下载状态
     let loadIndex=1;//加载index
     let loadTimer;//加载循环控件
     let allLoad=false;//是否全部加载完毕
@@ -80,8 +80,11 @@
     };
     //获取zips
     function requireZips() {
-        RequireZip(zipNum);
-        zipNum++;
+        if(isDownload==false){
+            RequireZip(zipNum);
+            zipNum++;
+            isDownload=true;
+        }
     }
     //解压zip
     function zipGetData(zip,fileName,dataType,zipIndex) {
