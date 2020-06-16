@@ -99,7 +99,7 @@
         })
     }
     //读取zip
-    function loadZip(fileName,zip,vttIndex,zipIndex){
+    function loadZip(fileName,zip,vttIndex,zipIndex,CONF){
         return new Promise(async function () {
             if(workers>0){
                 workers--;
@@ -112,23 +112,23 @@
                         zipIndex: event.data.zipIndex
                     });
                     console.log('loadZip',event.data.vttIndex,event.data.zipIndex);
-                    if(event.data.vttIndex==1&&event.data.zipIndex==1){
-                        loadHTML(1,1);
-                        unload();
-                        audio.play();
-                    }
                     if(list.length!=0){
                         let arr=list.shift();
                         let array=await zipGetData(arr.zip,arr.fileName,'Uint8Array',arr.zipIndex);
-                        this.postMessage({array:array,vttIndex:arr.vttIndex,zipIndex:arr.zipIndex,config:arr.config});
+                        this.postMessage({array:array,vttIndex:arr.vttIndex,zipIndex:arr.zipIndex,config:arr.CONF});
                     }else{
                         this.terminate();
                         workers++;
+                        if(event.data.zipIndex==1&&workers==setWorkers){
+                            loadHTML(1,1);
+                            unload();
+                            audio.play();
+                        }
                     }
                 };
-                worker.postMessage({array:array,vttIndex:vttIndex,zipIndex:zipIndex,config:config});
+                worker.postMessage({array:array,vttIndex:vttIndex,zipIndex:zipIndex,config:CONF});
             }else{
-                list.push({fileName:fileName,zip:zip,vttIndex:vttIndex,zipIndex:zipIndex,config:config})
+                list.push({fileName:fileName,zip:zip,vttIndex:vttIndex,zipIndex:zipIndex,CONF:CONF})
             }
         });
     }
@@ -144,9 +144,10 @@
                 console.log('RequireZip',zipIndex);
                 let jszip=new JSZip();
                 jszip.loadAsync(data).then(async function (zip) {
-                    config=JSON.parse(await zipGetData(zip,'config.json','string',zipIndex));
-                    for(let i=0;i<config['vttNames'].length;i++){
-                        loadZip(config['vttNames'][i],zip,i+1,zipIndex);
+                    let CONF=JSON.parse(await zipGetData(zip,'config.json','string',zipIndex));
+                    config=CONF;
+                    for(let i=0;i<CONF['vttNames'].length;i++){
+                        loadZip(CONF['vttNames'][i],zip,i+1,zipIndex,CONF);
                     }
                 }, function (e) {
                     console.log(e)
