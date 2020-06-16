@@ -19,9 +19,8 @@ function sendFile(response, filePath) {
             if(filePath.substring(filePath.length-3,filePath.length)=='mp3'){
                 response.setHeader( 'Accept-Ranges','bytes');
                 response.setHeader( 'Content-Length',data.length);
-            }else{
-                response.writeHead(200, { "Content-Type": mime.getType(path.basename(filePath))});
             }
+            response.writeHead(200, { "Content-Type": mime.getType(path.basename(filePath))});
             response.end(data);
         }
     })
