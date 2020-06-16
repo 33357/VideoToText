@@ -2,6 +2,11 @@ const fs=require('fs');
 const huffman=require('./huffman.js');
 const { parentPort } = require('worker_threads');
 //编码文件
+// const path = require('path');
+// let rootPath=path.join(__dirname, "../../");//项目根目录路径
+// let jsonPath=`${rootPath}config.json`;//config.json路径
+// const CONF=JSON.parse(fs.readFileSync(jsonPath));//引入config.json
+
 function transcodeFile(txtPath,vttPath,CONF,index) {
     let str = fs.readFileSync(txtPath + '.txt', 'utf8');
     str = str.replace(/\r\n/g, '');
@@ -33,7 +38,11 @@ function transcodeFile(txtPath,vttPath,CONF,index) {
         }
     } else {
         Buf = IPBuf;
-        codeKeyMap = {IPPage: IPHuffman['codeKeyMap']}
+        codeKeyMap = {
+            IPPage: IPHuffman['codeKeyMap'],
+            IPLength: IPBuf.length,
+            IPIndex: IPIndex
+        }
     }
     fs.writeFileSync(`${vttPath}.vtt`, Buf);
     console.log(`save ${vttPath}.vtt` + ' success!');
@@ -151,7 +160,7 @@ function transcodePPage(str,value,difference,CONF) {
         if(str.substring((i+skip)*height*width,(i+skip+1)*height*width)!=''){
             i+=skip;
         }else{
-            i=CONF['gifFrame']*CONF['vttSeconds']-1;
+            i=str.length/(height*width)-1;
             isBreak=true;
         }
     }
@@ -196,7 +205,7 @@ function transcodeBPage(str,value,difference,IPIndex,CONF) {
     return BPageStr;
 }
 
-//transcodeFile('F:\\clone\\VideoToTextServer\\build\\kai-1.0.0\\kai_w1020_h300_f12\\txt\\kai_w1020_h300_f12_z2_v5_z60\\kai_w1020_h300_f12_z2_v5_z60_1','F:\\clone\\VideoToTextServer\\build\\kai-1.0.0\\kai_w1020_h300_f12\\txt\\kai_w1020_h300_f12_z2_v5_z60\\kai_w1020_h300_f12_z2_v5_z60_1',CONF);
+//transcodeFile('F:\\clone\\VideoToText\\build\\jr-1.0.0\\jr_w1020_h300_f12\\txt\\jr_w1020_h300_f12_z4_v2_z8\\jr_w1020_h300_f12_z4_v2_z8_92','F:\\clone\\VideoToText\\build\\jr-1.0.0\\jr_w1020_h300_f12\\txt\\jr_w1020_h300_f12_z4_v2_z8\\jr_w1020_h300_f12_z4_v2_z8_92',CONF);
 //监听
 parentPort.on('message', (data) => {
     transcodeFile(data['txtPath'],data['vttPath'],data['CONF'],data['index']);

@@ -1,10 +1,10 @@
 {
-  "videoPath":"./video/sibi.mp4",
+  "videoPath":"./video/dongshi.mp4",
   "videoVersion": "1.0.0",
   "gifWidth": 1020,
   "gifHeight": 300,
   "gifFrame": 12,
-  "txtZoom": 1,
+  "txtZoom": 2,
   "vttSeconds": 2,
   "zipSeconds": 8,
   "txtColor" : "@#MBHA&XG893S5h1sri;:-,. ",

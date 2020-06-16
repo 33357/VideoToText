@@ -270,6 +270,9 @@
             }
         }
         let time=(length-1)*config['vttSeconds'];
+        if(time>audio.duration){
+            time=audio.duration;
+        }
         let sec=parseInt(time%60).toString();
         if(sec.length!=2){
             sec='0'+sec;

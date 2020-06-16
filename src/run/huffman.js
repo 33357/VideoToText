@@ -44,26 +44,35 @@ function Huffman(str) {
         var i = 0;
         var parentNode;
         var table = this.nodeList;
-        while(table.length > 1) {
-            parentNode = new Node(table[i], table[i+1], {key: null, val: table[i]['data'].val + table[i+1]['data'].val});
-            table.splice(i,2);
+        while (table.length > 1) {
+            parentNode = new Node(table[i], table[i + 1], {
+                key: null,
+                val: table[i]['data'].val + table[i + 1]['data'].val
+            });
+            table.splice(i, 2);
             table.unshift(parentNode);
-            table.sort(function(x,y){return x.data.val > y.data.val});
+            table.sort(function (x, y) {
+                return x.data.val > y.data.val
+            });
         }
         this.root = table[0] || new Node();
         return this.root;
     };
 
     this.traversal = function traversal(tree, code) {
-        if (tree.left !== null) {
-            traversal.call(this,tree.left, code + '0');
-        } else {
-            this.keyCodeMap[tree.data.key] = code;
-        }
-        if (tree.right !== null) {
-            traversal.call(this, tree.right,code + '1');
-        } else {
-            this.keyCodeMap[tree.data.key] = code;
+        if(tree.left==null&&tree.right==null&&code==''){
+            this.keyCodeMap[tree.data.key] = '0';
+        }else{
+            if (tree.left !== null) {
+                traversal.call(this,tree.left, code + '0');
+            } else {
+                this.keyCodeMap[tree.data.key] = code;
+            }
+            if (tree.right !== null) {
+                traversal.call(this, tree.right,code + '1');
+            } else {
+                this.keyCodeMap[tree.data.key] = code;
+            }
         }
     };
 
