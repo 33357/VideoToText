@@ -1,5 +1,5 @@
 # VideoToText
-视频转文本
+视频转字符画
 
 效果预览：http://videototext.top  （建议使用PC firefox浏览器浏览该网站）
 
