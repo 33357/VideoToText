@@ -11,6 +11,8 @@ pip3 install pillow
 
 npm install
 
+下载ffmpeg.exe并配置路径
+
 config.json配置:
 
 videoPath：导入视频的相对路径
